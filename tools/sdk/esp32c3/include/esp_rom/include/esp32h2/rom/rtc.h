@@ -1,18 +1,21 @@
 /*
- * SPDX-FileCopyrightText: 2022-2023 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2020-2021 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#pragma once
+#ifndef _ROM_RTC_H_
+#define _ROM_RTC_H_
+
+#include "ets_sys.h"
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "esp_assert.h"
 
 #include "soc/soc.h"
-#include "soc/lp_aon_reg.h"
+#include "soc/rtc_cntl_reg.h"
 #include "soc/reset_reasons.h"
-#include "esp_assert.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,31 +45,28 @@ extern "C" {
   *
   *************************************************************************************
   *     RTC store registers     usage
-  *     LP_AON_STORE0_REG     Reserved
-  *     LP_AON_STORE1_REG     RTC_SLOW_CLK calibration value
-  *     LP_AON_STORE2_REG     Boot time, low word
-  *     LP_AON_STORE3_REG     Boot time, high word
-  *     LP_AON_STORE4_REG     External XTAL frequency
-  *     LP_AON_STORE5_REG     APB bus frequency
-  *     LP_AON_STORE6_REG     FAST_RTC_MEMORY_ENTRY
-  *     LP_AON_STORE7_REG     FAST_RTC_MEMORY_CRC
-  *     LP_AON_STORE8_REG     Store light sleep wake stub addr
-  *     LP_AON_STORE9_REG     Store the sleep mode at bit[0]  (0:light sleep 1:deep sleep)
+  *     RTC_CNTL_STORE0_REG     Reserved
+  *     RTC_CNTL_STORE1_REG     RTC_SLOW_CLK calibration value
+  *     RTC_CNTL_STORE2_REG     Boot time, low word
+  *     RTC_CNTL_STORE3_REG     Boot time, high word
+  *     RTC_CNTL_STORE4_REG     External XTAL frequency
+  *     RTC_CNTL_STORE5_REG     APB bus frequency
+  *     RTC_CNTL_STORE6_REG     FAST_RTC_MEMORY_ENTRY
+  *     RTC_CNTL_STORE7_REG     FAST_RTC_MEMORY_CRC
   *************************************************************************************
   */
 
-#define RTC_SLOW_CLK_CAL_REG    LP_AON_STORE1_REG
-#define RTC_BOOT_TIME_LOW_REG   LP_AON_STORE2_REG
-#define RTC_BOOT_TIME_HIGH_REG  LP_AON_STORE3_REG
-#define RTC_XTAL_FREQ_REG       LP_AON_STORE4_REG
-#define RTC_APB_FREQ_REG        LP_AON_STORE5_REG
-#define RTC_ENTRY_ADDR_REG      LP_AON_STORE6_REG
-#define RTC_RESET_CAUSE_REG     LP_AON_STORE6_REG
-#define RTC_MEMORY_CRC_REG      LP_AON_STORE7_REG
-#define LIGHT_SLEEP_WAKE_STUB_ADDR_REG  LP_AON_STORE8_REG
-#define SLEEP_MODE_REG          LP_AON_STORE9_REG
+#define RTC_SLOW_CLK_CAL_REG    RTC_CNTL_STORE1_REG
+#define RTC_BOOT_TIME_LOW_REG   RTC_CNTL_STORE2_REG
+#define RTC_BOOT_TIME_HIGH_REG  RTC_CNTL_STORE3_REG
+#define RTC_XTAL_FREQ_REG       RTC_CNTL_STORE4_REG
+#define RTC_APB_FREQ_REG        RTC_CNTL_STORE5_REG
+#define RTC_ENTRY_ADDR_REG      RTC_CNTL_STORE6_REG
+#define RTC_RESET_CAUSE_REG     RTC_CNTL_STORE6_REG
+#define RTC_MEMORY_CRC_REG      RTC_CNTL_STORE7_REG
 
 #define RTC_DISABLE_ROM_LOG ((1 << 0) | (1 << 16)) //!< Disable logging from the ROM code.
+
 
 typedef enum {
     AWAKE = 0,             //<CPU ON
@@ -82,6 +82,7 @@ typedef enum {
     TG0WDT_SYS_RESET       =  7,    /**<7, Timer Group0 Watch dog reset digital core*/
     TG1WDT_SYS_RESET       =  8,    /**<8, Timer Group1 Watch dog reset digital core*/
     RTCWDT_SYS_RESET       =  9,    /**<9, RTC Watch dog Reset digital core*/
+    INTRUSION_RESET        = 10,    /**<10, Instrusion tested to reset CPU*/
     TG0WDT_CPU_RESET       = 11,    /**<11, Time Group0 reset CPU*/
     RTC_SW_CPU_RESET       = 12,    /**<12, Software reset CPU*/
     RTCWDT_CPU_RESET       = 13,    /**<13, RTC Watch dog Reset CPU*/
@@ -89,11 +90,12 @@ typedef enum {
     RTCWDT_RTC_RESET       = 16,    /**<16, RTC Watch dog reset digital core and rtc module*/
     TG1WDT_CPU_RESET       = 17,    /**<17, Time Group1 reset CPU*/
     SUPER_WDT_RESET        = 18,    /**<18, super watchdog reset digital core and rtc module*/
+    GLITCH_RTC_RESET       = 19,    /**<19, glitch reset digital core and rtc module*/
     EFUSE_RESET            = 20,    /**<20, efuse reset digital core*/
     USB_UART_CHIP_RESET    = 21,    /**<21, usb uart reset digital core */
     USB_JTAG_CHIP_RESET    = 22,    /**<22, usb jtag reset digital core */
     POWER_GLITCH_RESET     = 23,    /**<23, power glitch reset digital core and rtc module*/
-    JTAG_CPU_RESET         = 24,    /**<24, jtag reset CPU*/
+    JTAG_RESET             = 24,    /**<24, jtag reset CPU*/
 } RESET_REASON;
 
 // Check if the reset reason defined in ROM is compatible with soc/reset_reasons.h
@@ -110,11 +112,12 @@ ESP_STATIC_ASSERT((soc_reset_reason_t)RTCWDT_BROWN_OUT_RESET == RESET_REASON_SYS
 ESP_STATIC_ASSERT((soc_reset_reason_t)RTCWDT_RTC_RESET == RESET_REASON_SYS_RTC_WDT, "RTCWDT_RTC_RESET != RESET_REASON_SYS_RTC_WDT");
 ESP_STATIC_ASSERT((soc_reset_reason_t)TG1WDT_CPU_RESET == RESET_REASON_CPU0_MWDT1, "TG1WDT_CPU_RESET != RESET_REASON_CPU0_MWDT1");
 ESP_STATIC_ASSERT((soc_reset_reason_t)SUPER_WDT_RESET == RESET_REASON_SYS_SUPER_WDT, "SUPER_WDT_RESET != RESET_REASON_SYS_SUPER_WDT");
+ESP_STATIC_ASSERT((soc_reset_reason_t)GLITCH_RTC_RESET == RESET_REASON_SYS_CLK_GLITCH, "GLITCH_RTC_RESET != RESET_REASON_SYS_CLK_GLITCH");
 ESP_STATIC_ASSERT((soc_reset_reason_t)EFUSE_RESET == RESET_REASON_CORE_EFUSE_CRC, "EFUSE_RESET != RESET_REASON_CORE_EFUSE_CRC");
 ESP_STATIC_ASSERT((soc_reset_reason_t)USB_UART_CHIP_RESET == RESET_REASON_CORE_USB_UART, "USB_UART_CHIP_RESET != RESET_REASON_CORE_USB_UART");
 ESP_STATIC_ASSERT((soc_reset_reason_t)USB_JTAG_CHIP_RESET == RESET_REASON_CORE_USB_JTAG, "USB_JTAG_CHIP_RESET != RESET_REASON_CORE_USB_JTAG");
 ESP_STATIC_ASSERT((soc_reset_reason_t)POWER_GLITCH_RESET == RESET_REASON_CORE_PWR_GLITCH, "POWER_GLITCH_RESET != RESET_REASON_CORE_PWR_GLITCH");
-ESP_STATIC_ASSERT((soc_reset_reason_t)JTAG_CPU_RESET == RESET_REASON_CPU0_JTAG, "JTAG_CPU_RESET != RESET_REASON_CPU0_JTAG");
+ESP_STATIC_ASSERT((soc_reset_reason_t)JTAG_RESET == RESET_REASON_CPU0_JTAG, "JTAG_RESET != RESET_REASON_CPU0_JTAG");
 
 typedef enum {
     NO_SLEEP        = 0,
@@ -172,36 +175,16 @@ RESET_REASON rtc_get_reset_reason(int cpu_no);
   */
 WAKEUP_REASON rtc_get_wakeup_cause(void);
 
-typedef void (* esp_rom_wake_func_t)(void);
-
 /**
-  * @brief Read stored RTC wake function address
+  * @brief Get CRC for Fast RTC Memory.
   *
-  * Returns pointer to wake address if a value is set in RTC registers, and stored length & CRC all valid.
-  * valid means that both stored stub length and stored wake function address are four-byte aligned non-zero values
-  * and the crc check passes
+  * @param  uint32_t start_addr : 0 - 0x7ff for Fast RTC Memory.
   *
-  * @param  None
+  * @param  uint32_t crc_len : 0 - 0x7ff, 0 for 4 byte, 0x7ff for 0x2000 byte.
   *
-  * @return esp_rom_wake_func_t : Returns pointer to wake address if a value is set in RTC registers
+  * @return uint32_t : CRC32 result
   */
-esp_rom_wake_func_t esp_rom_get_rtc_wake_addr(void);
-
-/**
-  * @brief Store new RTC wake function address
-  *
-  * Set a new RTC wake address function. If a non-NULL function pointer is set then the function
-  * memory is calculated and stored also.
-  *
-  * @param entry_addr Address of function. should be 4-bytes aligned otherwise it will not start from the stub after wake from deepsleep，
-  *                   if NULL length will be ignored and all registers are cleared to 0.
-  *
-  * @param length length of function in RTC fast memory. should be less than RTC Fast memory size and aligned to 4-bytes.
-  *               otherwise all registers are cleared to 0.
-  *
-  * @return None
-  */
-void esp_rom_set_rtc_wake_addr(esp_rom_wake_func_t entry_addr, size_t length);
+uint32_t calc_rtc_memory_crc(uint32_t start_addr, uint32_t crc_len);
 
 /**
   * @brief Suppress ROM log by setting specific RTC control register.
@@ -218,8 +201,28 @@ static inline void rtc_suppress_rom_log(void)
      * you need to write to this register in the same format.
      * Namely, the upper 16 bits and lower should be the same.
      */
-    REG_SET_BIT(LP_AON_STORE4_REG, RTC_DISABLE_ROM_LOG);
+    REG_SET_BIT(RTC_CNTL_STORE4_REG, RTC_DISABLE_ROM_LOG);
 }
+
+/**
+  * @brief Set CRC of Fast RTC memory 0-0x7ff into RTC STORE7.
+  *
+  * @param  None
+  *
+  * @return None
+  */
+void set_rtc_memory_crc(void);
+
+/**
+  * @brief Fetch entry from RTC memory and RTC STORE reg
+  *
+  * @param uint32_t * entry_addr : the address to save entry
+  *
+  * @param RESET_REASON reset_reason : reset reason this time
+  *
+  * @return None
+  */
+void rtc_boot_control(uint32_t *entry_addr, RESET_REASON reset_reason);
 
 /**
   * @brief Software Reset digital core.
@@ -252,3 +255,5 @@ void software_reset_cpu(int cpu_no);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* _ROM_RTC_H_ */

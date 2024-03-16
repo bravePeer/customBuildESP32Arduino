@@ -1,8 +1,16 @@
-/*
- * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef __ESP_SYSTEM_H__
 #define __ESP_SYSTEM_H__
@@ -13,6 +21,15 @@
 #include "esp_attr.h"
 #include "esp_bit_defs.h"
 #include "esp_idf_version.h"
+
+#include "sdkconfig.h"
+
+// For backward compatibility. These headers
+// contains hardware operation functions and definitions
+// that were originally declared in this header.
+#include "esp_mac.h"
+#include "esp_chip_info.h"
+#include "esp_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,11 +50,6 @@ typedef enum {
     ESP_RST_DEEPSLEEP,  //!< Reset after exiting deep sleep mode
     ESP_RST_BROWNOUT,   //!< Brownout reset (software or hardware)
     ESP_RST_SDIO,       //!< Reset over SDIO
-    ESP_RST_USB,        //!< Reset by USB peripheral
-    ESP_RST_JTAG,       //!< Reset by JTAG
-    ESP_RST_EFUSE,      //!< Reset due to efuse error
-    ESP_RST_PWR_GLITCH, //!< Reset due to power glitch detected
-    ESP_RST_CPU_LOCKUP, //!< Reset due to CPU lock up
 } esp_reset_reason_t;
 
 /**
@@ -74,10 +86,10 @@ esp_err_t esp_unregister_shutdown_handler(shutdown_handler_t handle);
   *
   * This function can be called both from PRO and APP CPUs.
   * After successful restart, CPU reset reason will be SW_CPU_RESET.
-  * Peripherals (except for Wi-Fi, BT, UART0, SPI1, and legacy timers) are not reset.
+  * Peripherals (except for WiFi, BT, UART0, SPI1, and legacy timers) are not reset.
   * This function does not return.
   */
-void esp_restart(void) __attribute__ ((__noreturn__));
+void esp_restart(void) __attribute__ ((noreturn));
 
 /**
  * @brief  Get reason of last reset
@@ -88,7 +100,7 @@ esp_reset_reason_t esp_reset_reason(void);
 /**
   * @brief  Get the size of available heap.
   *
-  * @note Note that the returned value may be larger than the maximum contiguous block
+  * Note that the returned value may be larger than the maximum contiguous block
   * which can be allocated.
   *
   * @return Available heap size, in bytes.
@@ -98,7 +110,7 @@ uint32_t esp_get_free_heap_size(void);
 /**
   * @brief  Get the size of available internal heap.
   *
-  * @note Note that the returned value may be larger than the maximum contiguous block
+  * Note that the returned value may be larger than the maximum contiguous block
   * which can be allocated.
   *
   * @return Available internal heap size, in bytes.
@@ -117,7 +129,7 @@ uint32_t esp_get_minimum_free_heap_size( void );
  *
  * @param details Details that will be displayed during panic handling.
  */
-void  __attribute__((__noreturn__)) esp_system_abort(const char* details);
+void  __attribute__((noreturn)) esp_system_abort(const char* details);
 
 #ifdef __cplusplus
 }

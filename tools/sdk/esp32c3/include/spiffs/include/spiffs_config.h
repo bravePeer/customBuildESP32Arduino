@@ -1,9 +1,4 @@
 /*
- * SPDX-FileCopyrightText: 2013-2017 Peter Andersson (pelleplutt1976<at>gmail.com)
- *
- * SPDX-License-Identifier: MIT
- */
-/*
  * spiffs_config.h
  *
  *  Created on: Jul 3, 2013
@@ -71,7 +66,7 @@ extern void spiffs_api_unlock(struct spiffs_t *fs);
 
 // Defines spiffs debug print formatters
 // some general signed number
-#define _SPIPRIi   "%"PRIdMAX
+#define _SPIPRIi   "%d"
 // address
 #define _SPIPRIad  "%08x"
 // block

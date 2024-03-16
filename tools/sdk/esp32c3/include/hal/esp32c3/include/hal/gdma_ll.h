@@ -5,7 +5,6 @@
  */
 #pragma once
 
-#include <stddef.h> /* Required for NULL constant */
 #include <stdint.h>
 #include <stdbool.h>
 #include "hal/gdma_types.h"
@@ -17,8 +16,6 @@ extern "C" {
 #endif
 
 #define GDMA_LL_GET_HW(id) (((id) == 0) ? (&GDMA) : NULL)
-
-#define GDMA_LL_CHANNEL_MAX_PRIORITY 5 // supported priority levels: [0,5]
 
 #define GDMA_LL_RX_EVENT_MASK       (0x06A7)
 #define GDMA_LL_TX_EVENT_MASK       (0x1958)

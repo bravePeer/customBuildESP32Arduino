@@ -1,8 +1,16 @@
-/*
- * SPDX-FileCopyrightText: 2020-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #pragma once
 
@@ -16,7 +24,6 @@ extern "C" {
 #include "soc/system_reg.h"
 #include "soc/syscon_reg.h"
 #include "soc/dport_access.h"
-#include "esp_attr.h"
 
 static inline uint32_t periph_ll_get_clk_en_mask(periph_module_t periph)
 {
@@ -73,8 +80,6 @@ static inline uint32_t periph_ll_get_clk_en_mask(periph_module_t periph)
         return SYSTEM_BT_BASEBAND_EN;
     case PERIPH_BT_LC_MODULE:
         return SYSTEM_BT_LC_EN;
-    case PERIPH_TEMPSENSOR_MODULE:
-        return SYSTEM_TSENS_CLK_EN;
     default:
         return 0;
     }
@@ -122,8 +127,6 @@ static inline uint32_t periph_ll_get_rst_en_mask(periph_module_t periph, bool en
         return SYSTEM_TWAI_RST;
     case PERIPH_HMAC_MODULE:
         return SYSTEM_CRYPTO_HMAC_RST;
-    case PERIPH_TEMPSENSOR_MODULE:
-        return SYSTEM_TSENS_RST;
     case PERIPH_AES_MODULE:
         if (enable == true) {
             // Clear reset on digital signature, otherwise AES unit is held in reset also.
@@ -172,7 +175,6 @@ static uint32_t periph_ll_get_clk_en_reg(periph_module_t periph)
     case PERIPH_RSA_MODULE:
     case PERIPH_SHA_MODULE:
     case PERIPH_GDMA_MODULE:
-    case PERIPH_TEMPSENSOR_MODULE:
         return SYSTEM_PERIP_CLK_EN1_REG;
     default:
         return SYSTEM_PERIP_CLK_EN0_REG;
@@ -196,7 +198,6 @@ static uint32_t periph_ll_get_rst_en_reg(periph_module_t periph)
     case PERIPH_RSA_MODULE:
     case PERIPH_SHA_MODULE:
     case PERIPH_GDMA_MODULE:
-    case PERIPH_TEMPSENSOR_MODULE:
         return SYSTEM_PERIP_RST_EN1_REG;
     default:
         return SYSTEM_PERIP_RST_EN0_REG;
@@ -215,14 +216,16 @@ static inline void periph_ll_disable_clk_set_rst(periph_module_t periph)
     DPORT_SET_PERI_REG_MASK(periph_ll_get_rst_en_reg(periph), periph_ll_get_rst_en_mask(periph, false));
 }
 
-static inline void IRAM_ATTR periph_ll_wifi_bt_module_enable_clk(void)
+static inline void IRAM_ATTR periph_ll_wifi_bt_module_enable_clk_clear_rst(void)
 {
     DPORT_SET_PERI_REG_MASK(SYSTEM_WIFI_CLK_EN_REG, SYSTEM_WIFI_CLK_WIFI_BT_COMMON_M);
+    DPORT_CLEAR_PERI_REG_MASK(SYSTEM_CORE_RST_EN_REG, 0);
 }
 
-static inline void IRAM_ATTR periph_ll_wifi_bt_module_disable_clk(void)
+static inline void IRAM_ATTR periph_ll_wifi_bt_module_disable_clk_set_rst(void)
 {
     DPORT_CLEAR_PERI_REG_MASK(SYSTEM_WIFI_CLK_EN_REG, SYSTEM_WIFI_CLK_WIFI_BT_COMMON_M);
+    DPORT_SET_PERI_REG_MASK(SYSTEM_CORE_RST_EN_REG, 0);
 }
 
 static inline void periph_ll_reset(periph_module_t periph)

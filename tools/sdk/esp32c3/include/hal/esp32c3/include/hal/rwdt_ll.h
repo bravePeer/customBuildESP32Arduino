@@ -1,8 +1,16 @@
-/*
- * SPDX-FileCopyrightText: 2020-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 // The LL layer for Timer Group register operations.
 // Note that most of the register operations in this layer are non-atomic operations.
@@ -19,7 +27,7 @@ extern "C" {
 #include "hal/wdt_types.h"
 #include "soc/rtc_cntl_periph.h"
 #include "soc/rtc_cntl_struct.h"
-#include "hal/efuse_ll.h"
+#include "soc/efuse_reg.h"
 #include "esp_attr.h"
 #include "esp_assert.h"
 
@@ -38,10 +46,6 @@ ESP_STATIC_ASSERT(WDT_RESET_SIG_LENGTH_500ns == RTC_WDT_RESET_LENGTH_500_NS, "Ad
 ESP_STATIC_ASSERT(WDT_RESET_SIG_LENGTH_800ns == RTC_WDT_RESET_LENGTH_800_NS, "Add mapping to LL watchdog timeout behavior, since it's no longer naturally compatible with wdt_reset_sig_length_t");
 ESP_STATIC_ASSERT(WDT_RESET_SIG_LENGTH_1_6us == RTC_WDT_RESET_LENGTH_1600_NS, "Add mapping to LL watchdog timeout behavior, since it's no longer naturally compatible with wdt_reset_sig_length_t");
 ESP_STATIC_ASSERT(WDT_RESET_SIG_LENGTH_3_2us == RTC_WDT_RESET_LENGTH_3200_NS, "Add mapping to LL watchdog timeout behavior, since it's no longer naturally compatible with wdt_reset_sig_length_t");
-
-typedef rtc_cntl_dev_t rwdt_dev_t;
-
-#define RWDT_DEV_GET() &RTCCNTL
 
 /**
  * @brief Enable the RWDT
@@ -101,7 +105,7 @@ FORCE_INLINE_ATTR void rwdt_ll_config_stage(rtc_cntl_dev_t *hw, wdt_stage_t stag
     case WDT_STAGE0:
         hw->wdt_config0.stg0 = behavior;
         //Account of implicty multiplier applied to stage 0 timeout tick config value
-        hw->wdt_config1 = timeout_ticks >> (1 + efuse_ll_get_wdt_delay_sel());
+        hw->wdt_config1 = timeout_ticks >> (1 + REG_GET_FIELD(EFUSE_RD_REPEAT_DATA1_REG, EFUSE_WDT_DELAY_SEL));
         break;
     case WDT_STAGE1:
         hw->wdt_config0.stg1 = behavior;
